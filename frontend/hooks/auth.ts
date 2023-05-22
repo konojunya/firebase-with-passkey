@@ -9,7 +9,7 @@ import {
   onAuthStateChanged,
 } from "firebase/auth";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useEffectOnce } from "react-use";
 
 const app = initializeApp({
@@ -25,6 +25,7 @@ export function useAuth() {
   const auth = getAuth(app);
   const [email, setEmail] = useState("");
   const [user, setUser] = useState<User | null>(null);
+  const [canUsePassKey, setCanUsePassKey] = useState(false);
   const router = useRouter();
 
   const updateUserState = () => {
@@ -65,7 +66,30 @@ export function useAuth() {
     updateUserState();
   };
 
-  useEffectOnce(updateUserState);
+  const passKeyFeatureDetection = () => {
+    // feature detection
+    // ref: https://web.dev/passkey-registration/#feature-detection
+    if (
+      window.PublicKeyCredential &&
+      PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable &&
+      PublicKeyCredential.isConditionalMediationAvailable
+    ) {
+      // Check if user verifying platform authenticator is available.
+      Promise.all([
+        PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable(),
+        PublicKeyCredential.isConditionalMediationAvailable(),
+      ]).then((results) => {
+        if (results.every((r) => r === true)) {
+          setCanUsePassKey(true);
+        }
+      });
+    }
+  };
+
+  useEffectOnce(() => {
+    updateUserState();
+    passKeyFeatureDetection();
+  });
 
   return {
     signinWithEmailLink,
@@ -75,5 +99,6 @@ export function useAuth() {
     setEmail,
     auth,
     user,
+    canUsePassKey,
   };
 }
