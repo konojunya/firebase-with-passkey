@@ -1,3 +1,17 @@
+import { NotLoggedIn } from "../components/NotLoggedIn";
+import { useAuth } from "../hooks/auth";
+
 export default function Home() {
-  <h1>hello</h1>;
+  const { user, signout } = useAuth();
+
+  if (user == null) {
+    return <NotLoggedIn />;
+  }
+
+  return (
+    <div>
+      <h1>Hello, {user.email}</h1>
+      <button onClick={signout}>logout</button>
+    </div>
+  );
 }
