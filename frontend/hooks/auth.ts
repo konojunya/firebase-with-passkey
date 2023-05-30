@@ -11,6 +11,9 @@ import {
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { useEffectOnce } from "react-use";
+import { fetchChallenge } from "../api";
+import base64url from "base64url";
+import { string2Buffer } from "@utils";
 
 const app = initializeApp({
   apiKey: process.env.NEXT_PUBLIC_API_KEY,
@@ -86,6 +89,41 @@ export function useAuth() {
     }
   };
 
+  const registerPassKeyRequest = async () => {
+    const options = {
+      attestation: "none",
+      authenticatorSelection: {
+        authenticatorAttachment: "platform",
+        userVerification: "required",
+        requireResidentKey: false,
+      },
+    };
+
+    const challengeResponse = await fetchChallenge(options);
+
+    // https://web.dev/passkey-registration/#call-webauthn-api-to-create-a-passkey
+    const credentials = await navigator.credentials.create({
+      publicKey: {
+        challenge: string2Buffer(base64url.decode(challengeResponse.challenge)),
+        rp: {
+          name: "SimpleWebAuthn Example",
+          id: "localhost",
+        },
+        user: {
+          id: string2Buffer(challengeResponse.userId),
+          name: challengeResponse.userId,
+          displayName: challengeResponse.userId,
+        },
+        pubKeyCredParams: challengeResponse.publicKeyCredentialParams,
+        excludeCredentials: challengeResponse.excludeCredentials,
+        authenticatorSelection: {
+          authenticatorAttachment: "platform",
+          requireResidentKey: true,
+        },
+      },
+    });
+  };
+
   useEffectOnce(() => {
     updateUserState();
     passKeyFeatureDetection();
@@ -100,5 +138,6 @@ export function useAuth() {
     auth,
     user,
     canUsePassKey,
+    registerPassKeyRequest,
   };
 }

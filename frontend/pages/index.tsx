@@ -2,7 +2,7 @@ import { NotLoggedIn } from "../components/NotLoggedIn";
 import { useAuth } from "../hooks/auth";
 
 export default function Home() {
-  const { user, signout, canUsePassKey } = useAuth();
+  const { user, signout, canUsePassKey, registerPassKeyRequest } = useAuth();
 
   if (user == null) {
     return <NotLoggedIn />;
@@ -13,7 +13,9 @@ export default function Home() {
       <h1>Hello, {user.email}</h1>
       <button onClick={signout}>logout</button>
 
-      {canUsePassKey && <button>passkey を設定する</button>}
+      {canUsePassKey && (
+        <button onClick={registerPassKeyRequest}>passkey を設定する</button>
+      )}
     </div>
   );
 }
