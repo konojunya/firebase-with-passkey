@@ -115,7 +115,7 @@ export async function fetchChallenge(options: ChallengeRequestOptions = {}) {
     timeout: 60000,
     attestationType: attestation,
     excludeCredentials,
-    authenticatorSelection: as,
+    authenticatorSelection,
   });
 
   const challenge = challengeOptions.challenge;

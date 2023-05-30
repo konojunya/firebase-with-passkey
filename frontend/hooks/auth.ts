@@ -111,8 +111,10 @@ export function useAuth() {
         },
         user: {
           id: string2Buffer(challengeResponse.userId),
-          name: challengeResponse.userId,
-          displayName: challengeResponse.userId,
+          // 以下 name と displayName はほぼ同じ。なんで別なのかわからん
+          // ref: https://zenn.dev/inabajunmr/articles/webauthn-input-table-level3#publickeycredentialuserentity
+          name: "JJ",
+          displayName: "JJ Display Name",
         },
         pubKeyCredParams: challengeResponse.publicKeyCredentialParams,
         excludeCredentials: challengeResponse.excludeCredentials,
@@ -122,6 +124,8 @@ export function useAuth() {
         },
       },
     });
+
+    console.log(credentials);
   };
 
   useEffectOnce(() => {
