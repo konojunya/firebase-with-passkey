@@ -11,7 +11,7 @@ import {
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { useEffectOnce } from "react-use";
-import { fetchChallenge } from "../api";
+import { fetchChallenge, signinRequest, signinRequestChallenge } from "../api";
 import base64url from "base64url";
 import { string2Buffer } from "@utils";
 
@@ -128,6 +128,33 @@ export function useAuth() {
     console.log(credentials);
   };
 
+  const signinWithPassKey = async () => {
+    const challengeResponse = await signinRequestChallenge({
+      userVerification: "required",
+    });
+    if (challengeResponse == null) {
+      return;
+    }
+
+    const challenge = base64url.decode(challengeResponse.challenge);
+
+    // ref: https://web.dev/passkey-form-autofill/#call-webauthn-api-with-the-conditional-flag-to-authenticate-the-user
+    const cred = await navigator.credentials.get({
+      publicKey: {
+        challenge: string2Buffer(base64url.decode(challenge)),
+        rpId: "localhost",
+      },
+      mediation: "required",
+    });
+
+    console.log(cred);
+
+    // custom token を返してもらう
+    await signinRequest(challenge);
+    // signInWithCustomToken する
+    // 認証完了
+  };
+
   useEffectOnce(() => {
     updateUserState();
     passKeyFeatureDetection();
@@ -136,6 +163,7 @@ export function useAuth() {
   return {
     signinWithEmailLink,
     verifySignInWithEmailLink,
+    signinWithPassKey,
     signout,
     email,
     setEmail,

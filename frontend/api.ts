@@ -1,8 +1,9 @@
-import { generateRegistrationOptions } from "@simplewebauthn/server";
-import type {
-  AttestationConveyancePreference,
-  PublicKeyCredentialDescriptorFuture,
-} from "@simplewebauthn/typescript-types";
+import {
+  generateAuthenticationOptions,
+  generateRegistrationOptions,
+  verifyAuthenticationResponse,
+} from "@simplewebauthn/server";
+import type { AttestationConveyancePreference } from "@simplewebauthn/typescript-types";
 import base64url from "base64url";
 
 // dummy response
@@ -133,4 +134,48 @@ export async function fetchChallenge(options: ChallengeRequestOptions = {}) {
     publicKeyCredentialParams,
     challenge,
   };
+}
+
+interface SigninRequestOptions {
+  userVerification: UserVerificationRequirement;
+}
+
+export function signinRequestChallenge({
+  userVerification = "required",
+}: SigninRequestOptions) {
+  // DBからユーザーがいるかどうかを検証
+  const user = {
+    uid: "0",
+    email: "jj@example.com",
+    credentials: [{ uid: "0", passwordHash: "hash" }],
+  };
+
+  if (user == null) {
+    // 本来はサーバーサイドからエラーを返す 404 とか
+    return null;
+  }
+
+  return generateAuthenticationOptions({
+    rpID: "localhost",
+    allowCredentials: [],
+    userVerification,
+  });
+}
+
+export function signinRequest(challenge: string) {
+  // DBからユーザーがいるかどうかを検証
+  const user = {
+    uid: "0",
+    email: "jj@example.com",
+    credentials: [{ uid: "0", passwordHash: "hash" }],
+  };
+
+  // ref: https://simplewebauthn.dev/docs/packages/server#2-verify-authentication-response
+  const verification = verifyAuthenticationResponse({
+    response: {} as any,
+    expectedChallenge: challenge,
+    expectedOrigin: "http://localhost:3000",
+    expectedRPID: "localhost",
+    authenticator: {} as any,
+  });
 }
